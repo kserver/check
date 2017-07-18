@@ -1,6 +1,6 @@
 {
-    "name": "@local/check",
-    "version": "0.1.0",
+    "name": "kserver-check",
+    "version": "1.0.4",
     "main": "dist.umd.js",
     "module": "dist.umd.js",
     "engines": {
