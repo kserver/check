@@ -125,7 +125,7 @@ function check(template, data, options = {}){
             e[field] = ERROR_REQUIRE;
         }
         if(dataValue===undefined) return;
-        if(templateValue==null) {
+        if(templateValue===null||dataValue===null) {
             d[field] = dataValue;
             return;
         }
@@ -135,7 +135,6 @@ function check(template, data, options = {}){
             d[field] = r.data;
         }else{
             hasError = true;
-            console.log(r);
             Object.keys(r.error).forEach(function(key){
                 e[prefixKey(field, key)] = r.error[key];
             })
