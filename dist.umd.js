@@ -56,8 +56,10 @@
 
     function check(template, data) {
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+        var /*internal*/arrayIndex = arguments[3];
 
         if (data === null) return { valid: false, error: { '': ERROR_NULL } };
+        if (template === null) return { valid: true, data: data };
 
         var _options$requirePrefi = options.requirePrefix,
             requirePrefix = _options$requirePrefi === undefined ? '*' : _options$requirePrefi,
@@ -80,7 +82,7 @@
             }
         }
         if (templateType === 'function' && template.length > 0 /* fn arguments */) {
-                return transFunctionalCheck(template(data, options), data);
+                return transFunctionalCheck(template(data, options, arrayIndex), data);
             }
 
         if (templateType !== dataType) {
@@ -98,21 +100,34 @@
                 var error = {};
                 var hasError = false;
 
-                var t = template[0];
-                var arrayOptions = template[1] || {};
+                var ts = [];
+                var options = {};
 
-                if (arrayOptions.min && data.length < arrayOptions.min || arrayOptions.max && data.length > arrayOptions.max) {
+                if (template.length >= 2) {
+                    options = template[template.length - 1];
+                    ts.push.apply(ts, template.slice(0, template.length - 1));
+                } else {
+                    ts = template;
+                }
+
+                if (options.min && data.length < options.min || options.max && data.length > options.max) {
                     return {
                         v: { valid: false, error: { '': ERROR_ARRAY_RANGE } }
                     };
                 }
 
-                if (!t) return {
+                if (ts.length === 0) return {
                         v: { valid: true, data: data }
                     };
 
                 var _loop = function (i) {
-                    var checkResult = check(t, data[i], options);
+                    var t = i < ts.length ? ts[i] : ts[ts.length - 1];
+                    if (t === null) {
+                        l.push(data[i]);
+                        return 'continue';
+                    }
+
+                    var checkResult = check(t, data[i], options, i);
                     if (checkResult.valid) {
                         l.push(checkResult.data);
                         return 'continue';
