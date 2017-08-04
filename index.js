@@ -38,8 +38,9 @@ function transFunctionalCheck(checkResult, row){
     return { valid: true, data: checkResult };
 }
 
-function check(template, data, options = {}){
+function check(template, data, options = {}, /*internal*/arrayIndex){
     if(data===null) return { valid: false, error: { '': ERROR_NULL  } };
+    if(template===null) return { valid: true, data };
 
     const { requirePrefix = '*', filter = false, strict = false } = options;
 
@@ -57,7 +58,7 @@ function check(template, data, options = {}){
         }
     }
     if(templateType==='function'&&template.length>0/* fn arguments */){
-        return transFunctionalCheck(template(data, options), data);
+        return transFunctionalCheck(template(data, options, arrayIndex), data);
     }
 
     if(templateType!==dataType){
@@ -75,20 +76,33 @@ function check(template, data, options = {}){
         const error = {};
         let hasError = false;
 
-        const t = template[0];
-        const arrayOptions = template[1]||{};
+        let ts = [];
+        let options = {};
+
+        if(template.length>=2){
+            options = template[template.length-1];
+            ts.push.apply(ts, template.slice(0, template.length-1));
+        }else{
+            ts = template;
+        }
         
         if(
-            (arrayOptions.min && data.length<arrayOptions.min)||
-            (arrayOptions.max && data.length>arrayOptions.max)
+            (options.min && data.length<options.min)||
+            (options.max && data.length>options.max)
         ){
             return { valid: false, error: { '': ERROR_ARRAY_RANGE } }
         }
 
-        if(!t) return { valid: true, data };
+        if(ts.length===0) return { valid: true, data };
 
         for(let i=0; i<data.length; ++i){
-            const checkResult = check( t, data[i], options );
+            const t = i<ts.length ? ts[i] : ts[ts.length-1];
+            if(t===null){
+                l.push(data[i]);
+                continue;
+            }
+
+            const checkResult = check( t, data[i], options, i );
             if(checkResult.valid){
                 l.push(checkResult.data);
                 continue;
